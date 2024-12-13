@@ -8,35 +8,52 @@ def sieve_of_eratosthenes(max_n):
         if is_prime[i]:
             for multiple in range(i * i, max_n + 1, i):
                 is_prime[multiple] = False
-    return [i for i, prime in enumerate(is_prime) if prime]
+    return is_prime
 
 
-def calculate_prime_moves(prime_list, max_n):
-    """Precompute the number of moves for each n based on prime removals."""
-    moves = [0] * (max_n + 1)
-    for prime in prime_list:
-        for multiple in range(prime, max_n + 1, prime):
-            moves[multiple] += 1
-    return moves
+def simulate_game(n, is_prime):
+    """Simulate a single game and determine the winner."""
+    # Create a list to track remaining numbers
+    remaining = [True] * (n + 1)
+    remaining[0] = remaining[1] = False  # Exclude 0 and 1
+    current_turn = 0  # 0 = Maria, 1 = Ben
+
+    while True:
+        # Find the first prime still in the set
+        move_made = False
+        for i in range(2, n + 1):
+            if remaining[i] and is_prime[i]:
+                # Remove the prime and its multiples
+                for j in range(i, n + 1, i):
+                    remaining[j] = False
+                move_made = True
+                break
+
+        if not move_made:
+            # No moves left; the current player loses
+            return "Ben" if current_turn == 0 else "Maria"
+
+        # Switch turns
+        current_turn = 1 - current_turn
 
 
 def isWinner(x, nums):
-    """Determine the winner of the prime game."""
+    """Determine the overall winner after x rounds."""
     if not nums or x <= 0:
         return None
 
     max_n = max(nums)
-    primes = sieve_of_eratosthenes(max_n)
-    prime_moves = calculate_prime_moves(primes, max_n)
+    is_prime = sieve_of_eratosthenes(max_n)
 
     maria_wins = 0
     ben_wins = 0
 
     for n in nums:
-        if prime_moves[n] % 2 == 0:
-            ben_wins += 1
-        else:
+        winner = simulate_game(n, is_prime)
+        if winner == "Maria":
             maria_wins += 1
+        else:
+            ben_wins += 1
 
     if maria_wins > ben_wins:
         return "Maria"
